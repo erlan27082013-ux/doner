@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Генератор QR-кода</title>
+<style>
+  :root{
+    --bg:#EEF2F0; --card:#FFFFFF; --ink:#12201B; --muted:#5C6E67; --line:#D5DEDA;
+    --accent:#0F7B5F; --accent-ink:#FFFFFF; --danger:#B3261E;
+  }
+  @media (prefers-color-scheme: dark){
+    :root{--bg:#0E1613; --card:#16221E; --ink:#E9F2EE; --muted:#9BB0A8; --line:#2A3B35; --accent:#2FB68F; --accent-ink:#06241B; --danger:#FF8A80}
+  }
+  *{box-sizing:border-box}
+  body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);
+    font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    display:flex;justify-content:center;align-items:flex-start;padding:24px 16px 48px}
+  main{width:100%;max-width:460px;display:flex;flex-direction:column;gap:16px}
+  h1{font-size:26px;line-height:1.2;margin:0 0 4px}
+  .lead{margin:0;color:var(--muted)}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:20px;display:flex;flex-direction:column;gap:14px}
+  label{font-weight:600;font-size:14px}
+  input[type=text]{width:100%;font:inherit;color:var(--ink);background:var(--bg);border:2px solid var(--line);
+    border-radius:12px;padding:14px;min-height:50px}
+  input[type=text]:focus{outline:none;border-color:var(--accent)}
+  button{font:inherit;font-weight:700;border:0;border-radius:12px;min-height:50px;padding:12px 18px;cursor:pointer}
+  .primary{background:var(--accent);color:var(--accent-ink)}
+  .secondary{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+  button:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+  .error{color:var(--danger);font-size:14px;margin:0;min-height:1.2em}
+  #result{align-items:center;text-align:center}
+  #result[hidden]{display:none}
+  .qrbox{background:#fff;padding:12px;border-radius:12px;border:1px solid var(--line);line-height:0}
+  canvas{width:min(100%,300px);height:auto;display:block}
+  .target{font-size:14px;color:var(--muted);word-break:break-all;margin:0}
+  .target b{color:var(--ink)}
+  #result button{width:100%}
+  details{font-size:15px}
+  summary{cursor:pointer;font-weight:700}
+  details ol{padding-left:20px;margin:10px 0 0}
+  details li{margin-bottom:8px}
+  code{background:var(--bg);padding:1px 6px;border-radius:6px;font-size:13px}
+</style>
+</head>
+<body>
+<main>
+  <div>
+    <h1>Генератор QR-кода</h1>
+    <p class="lead">Вставьте ссылку на сайт. QR-код откроет именно её.</p>
+  </div>
+
+  <form class="card" id="form" autocomplete="off">
+    <label for="url">Ссылка на сайт</label>
+    <input type="text" id="url" inputmode="url" placeholder="https://example.com" autocapitalize="off" spellcheck="false">
+    <p class="error" id="error" role="alert"></p>
+    <button type="submit" class="primary">Создать QR-код</button>
+  </form>
+
+  <section class="card" id="result" hidden>
+    <div class="qrbox"><canvas id="canvas" aria-label="QR-код"></canvas></div>
+    <p class="target">Ведёт на: <b id="target"></b></p>
+    <button type="button" class="secondary" id="download">Скачать QR-код (PNG)</button>
+  </section>
+
+  <section class="card">
+    <details>
+      <summary>У меня нет сайта. Как разместить бесплатно?</summary>
+      <ol>
+        <li>Сохраните свою страницу в файл с именем <code>index.html</code> и положите его в отдельную папку.</li>
+        <li>Откройте <code>app.netlify.com/drop</code> и перетащите папку в окно. Через несколько секунд появится ссылка вида <code>https://имя.netlify.app</code>.</li>
+        <li>Откройте ссылку и проверьте, что страница работает.</li>
+        <li>Вставьте эту ссылку сюда и создайте QR-код.</li>
+      </ol>
+      <p class="lead" style="margin-top:10px">Другие бесплатные варианты: GitHub Pages и Cloudflare Pages. Ссылка с адресом <code>localhost</code> или <code>file://</code> у других людей не откроется.</p>
+    </details>
+  </section>
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script>
+(function () {
+  // Кодируем ссылку как UTF-8, чтобы работали и кириллические адреса.
+  qrcode.stringToBytes = qrcode.stringToBytesFuncs['UTF-8'];
+
+  var form = document.getElementById('form');
+  var input = document.getElementById('url');
+  var errorEl = document.getElementById('error');
+  var result = document.getElementById('result');
+  var canvas = document.getElementById('canvas');
+  var targetEl = document.getElementById('target');
+  var currentUrl = '';
+
+  // Превращает введённый текст в корректную ссылку или бросает ошибку.
+  function normalize(raw) {
+    var s = raw.trim();
+    if (!s) throw new Error('Вставьте ссылку на сайт.');
+    if (!/^[a-z][a-z0-9+.\-]*:\/\//i.test(s)) s = 'https://' + s;
+    var u;
+    try { u = new URL(s); } catch (e) { throw new Error('Это не похоже на ссылку. Пример: https://example.com'); }
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') throw new Error('Нужна ссылка, которая начинается с http:// или https://');
+    if (u.hostname === 'localhost' || u.hostname.indexOf('.') === -1) throw new Error('Ссылка должна быть доступна из интернета. Адрес localhost у других людей не откроется.');
+    return u.href;
+  }
+
+  // Рисует QR на canvas: чёрные модули на белом фоне, поле 4 модуля со всех сторон.
+  function drawQR(text, cnv) {
+    var qr = qrcode(0, 'M');
+    qr.addData(text);
+    qr.make();
+    var count = qr.getModuleCount();
+    var quiet = 4;
+    var scale = Math.max(1, Math.floor(1024 / (count + quiet * 2)));
+    var size = (count + quiet * 2) * scale;
+    cnv.width = size;
+    cnv.height = size;
+    var ctx = cnv.getContext('2d');
+    ctx.fillStyle = '#FFFFFF';
+    ctx.fillRect(0, 0, size, size);
+    ctx.fillStyle = '#000000';
+    for (var r = 0; r < count; r++) {
+      for (var c = 0; c < count; c++) {
+        if (qr.isDark(r, c)) ctx.fillRect((c + quiet) * scale, (r + quiet) * scale, scale, scale);
+      }
+    }
+  }
+
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    errorEl.textContent = '';
+    try {
+      currentUrl = normalize(input.value);
+      drawQR(currentUrl, canvas);
+      targetEl.textContent = currentUrl;
+      result.hidden = false;
+      result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    } catch (err) {
+      result.hidden = true;
+      errorEl.textContent = err.message;
+    }
+  });
+
+  document.getElementById('download').addEventListener('click', function () {
+    canvas.toBlob(function (blob) {
+      var a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = 'qr-code.png';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(function () { URL.revokeObjectURL(a.href); }, 1000);
+    }, 'image/png');
+  });
+})();
+</script>
+</body>
+</html>
