@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Донер на Кравцово</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Manrope:wght@400;500;700&display=swap">
+<style>
+/* Layout: плотная уличная афиша. Крупный заголовок слева, вертел-логотип справа, меню сеткой, липкая панель заказа внизу. */
+:root{
+  --bg:#F4F2EF; --surface:#FFFFFF; --ink:#1B1412; --muted:#6B5E58;
+  --red:#D7261E; --red-ink:#FFFFFF; --yellow:#FFC21A; --line:#E3DDD6;
+  --display:'Unbounded','Arial Black',Arial,sans-serif;
+  --body:'Manrope','Segoe UI',Arial,sans-serif;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){--bg:#16100E;--surface:#221916;--ink:#F6EFE8;--muted:#B5A79D;--line:#35292A;--red:#E5392F;color-scheme:dark}
+}
+:root[data-theme="dark"]{--bg:#16100E;--surface:#221916;--ink:#F6EFE8;--muted:#B5A79D;--line:#35292A;--red:#E5392F;color-scheme:dark}
+
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.5;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0 110px}
+.wrap{max-width:1040px;margin-inline:auto}
+h1,h2,h3{font-family:var(--display);line-height:1.1;margin:0;text-wrap:balance}
+a{color:inherit}
+:focus-visible{outline:3px solid var(--yellow);outline-offset:2px}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:16px;padding-block:16px}
+header .brand{display:flex;align-items:center;gap:10px;font-family:var(--display);font-weight:700;font-size:14px;text-decoration:none}
+header svg{width:44px;height:44px;flex:none}
+header nav{display:flex;gap:16px;font-weight:700;font-size:14px}
+header nav a{text-decoration:none;color:var(--muted)}
+header nav a:hover{color:var(--ink)}
+
+.hero{display:grid;grid-template-columns:1.2fr .8fr;gap:24px;align-items:center;padding-block:24px 40px}
+.hero h1{font-weight:900;font-size:clamp(34px,7vw,64px);letter-spacing:-.02em}
+.hero h1 em{font-style:normal;color:var(--red)}
+.hero p{color:var(--muted);max-width:46ch;margin:16px 0 24px;font-size:17px}
+.hero .actions{display:flex;flex-wrap:wrap;gap:12px}
+.btn{display:inline-flex;align-items:center;justify-content:center;border:0;cursor:pointer;font:700 16px var(--body);
+  padding:14px 22px;border-radius:999px;text-decoration:none;min-height:48px}
+.btn.primary{background:var(--red);color:var(--red-ink)}
+.btn.ghost{background:transparent;color:var(--ink);box-shadow:inset 0 0 0 2px var(--ink)}
+.hero .logo{justify-self:center;width:min(100%,320px)}
+.hero .logo svg{width:100%;height:auto;display:block;transform:rotate(-4deg)}
+
+.facts{display:flex;flex-wrap:wrap;gap:10px 28px;padding-block:16px;border-block:2px solid var(--ink);font-weight:700;font-size:14px;text-transform:uppercase;letter-spacing:.06em}
+.facts span{min-width:0}
+
+section{padding-block:44px 8px}
+h2{font-weight:900;font-size:clamp(26px,5vw,38px);margin-bottom:8px}
+.sub{color:var(--muted);margin:0 0 24px}
+
+.menu{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.item{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;display:flex;flex-direction:column;gap:10px;min-width:0}
+.item h3{font-size:16px;font-weight:700}
+.item p{margin:0;color:var(--muted);font-size:14px;flex:1}
+.item .row{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.price{font-family:var(--display);font-weight:700;font-size:18px;font-variant-numeric:tabular-nums}
+.qty{display:flex;align-items:center;gap:6px}
+.qty button{width:40px;height:40px;border-radius:50%;border:2px solid var(--ink);background:transparent;color:var(--ink);font:700 20px var(--body);cursor:pointer;line-height:1}
+.qty button.add{background:var(--yellow);border-color:var(--yellow);color:#1B1412}
+.qty output{min-width:24px;text-align:center;font-weight:700;font-variant-numeric:tabular-nums}
+.item.hit{border-color:var(--red)}
+.tag{align-self:flex-start;background:var(--yellow);color:#1B1412;font-size:11px;font-weight:800;letter-spacing:.08em;text-transform:uppercase;padding:3px 8px;border-radius:999px}
+
+.info{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:14px}
+.info div{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px;min-width:0}
+.info b{display:block;font-size:12px;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin-bottom:6px}
+.info span{font-weight:700;overflow-wrap:anywhere}
+.note{font-size:13px;color:var(--muted);margin-top:24px}
+
+footer{padding-block:32px;color:var(--muted);font-size:13px}
+
+.bar{position:fixed;left:0;right:0;bottom:0;background:var(--ink);color:var(--bg);
+  padding:12px max(16px,env(safe-area-inset-left,0px)) calc(12px + env(safe-area-inset-bottom,0px)) max(16px,env(safe-area-inset-right,0px));z-index:5}
+.bar .in{max-width:1040px;margin-inline:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.bar .sum{min-width:0;font-weight:700;font-size:14px}
+.bar .sum strong{font-family:var(--display);font-size:18px;display:block;font-variant-numeric:tabular-nums}
+.bar .btn{background:var(--yellow);color:#1B1412;flex:none}
+.bar .btn[disabled]{opacity:.45;cursor:not-allowed}
+.toast{position:fixed;left:50%;transform:translateX(-50%);bottom:calc(88px + env(safe-area-inset-bottom,0px));background:var(--yellow);color:#1B1412;font-weight:700;padding:10px 16px;border-radius:999px;z-index:6;max-width:calc(100% - 32px);text-align:center}
+
+@media (max-width:700px){
+  .hero{grid-template-columns:1fr}
+  .hero .logo{order:-1;width:200px;justify-self:start}
+  header nav{display:none}
+}
+@media (prefers-reduced-motion:no-preference){
+  .hero .logo svg{transition:transform .4s ease}
+  .hero .logo svg:hover{transform:rotate(2deg) scale(1.03)}
+}
+</style>
+
+<div class="wrap">
+  <header>
+    <a class="brand" href="#top" id="top">
+      <svg viewBox="0 0 240 240" aria-hidden="true"><use href="#logo-mark"/></svg>
+      Донер на Кравцово
+    </a>
+    <nav><a href="#menu">Меню</a><a href="#contacts">Контакты</a></nav>
+  </header>
+
+  <div class="hero">
+    <div>
+      <h1>Донер, который <em>делают при вас</em></h1>
+      <p>Мясо с вертела, горячий лаваш, свежие овощи и фирменный соус. Выберите позиции в меню, нажмите «Скопировать заказ» и отправьте нам в мессенджер.</p>
+      <div class="actions">
+        <a class="btn primary" href="#menu">Выбрать донер</a>
+        <a class="btn ghost" href="#contacts">Где мы</a>
+      </div>
+    </div>
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 240 240"><use href="#logo-mark"/></svg>
+    </div>
+  </div>
+
+  <div class="facts">
+    <span>Вертел с утра</span>
+    <span>Лаваш горячий</span>
+    <span>Соус на выбор: чесночный, острый, сырный</span>
+  </div>
+
+  <section id="menu">
+    <h2>Меню</h2>
+    <p class="sub">Нажмите «+», чтобы добавить в заказ. Цены в тенге.</p>
+    <div class="menu" id="menuGrid"></div>
+  </section>
+
+  <section id="contacts">
+    <h2>Контакты</h2>
+    <p class="sub">Заходите или заказывайте заранее, чтобы забрать без очереди.</p>
+    <div class="info">
+      <div><b>Адрес</b><span>Кравцово, [точный адрес]</span></div>
+      <div><b>Часы работы</b><span>Ежедневно, 10:00 – 23:00</span></div>
+      <div>
+        <b>Телефон / WhatsApp</b>
+        <span id="phone">+7 (000) 000-00-00</span>
+        <button class="btn ghost" id="copyPhone" style="min-height:40px;padding:8px 16px;margin-top:10px;font-size:14px">Скопировать номер</button>
+      </div>
+    </div>
+    <p class="note">Это демо-версия сайта. Адрес, телефон, часы работы и цены нужно заменить на реальные.</p>
+  </section>
+
+  <footer>© Донер на Кравцово</footer>
+</div>
+
+<div class="bar">
+  <div class="in">
+    <div class="sum"><span id="count">Заказ пуст</span><strong id="total">0 ₸</strong></div>
+    <button class="btn" id="copyOrder" disabled>Скопировать заказ</button>
+  </div>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <g id="logo-mark">
+      <circle cx="120" cy="120" r="116" fill="#D7261E"/>
+      <circle cx="120" cy="120" r="104" fill="none" stroke="#FFC21A" stroke-width="3"/>
+      <rect x="117" y="26" width="6" height="104" rx="3" fill="#FFC21A"/>
+      <circle cx="120" cy="24" r="6" fill="#FFC21A"/>
+      <path d="M70 52 H170 L152 128 H88 Z" fill="#7A3B1E"/>
+      <path d="M74 66 H166 L163 80 H77 Z" fill="#9C5127"/>
+      <path d="M80 92 H160 L156 106 H84 Z" fill="#9C5127"/>
+      <path d="M70 52 H170 L168 60 H72 Z" fill="#C97A3A"/>
+      <path d="M88 128 H152 L148 138 H92 Z" fill="#1B1412"/>
+      <text x="120" y="176" text-anchor="middle" font-family="Unbounded, Arial Black, Arial, sans-serif" font-weight="900" font-size="30" fill="#FFFFFF" letter-spacing="1">ДОНЕР</text>
+      <text x="120" y="200" text-anchor="middle" font-family="Manrope, Arial, sans-serif" font-weight="800" font-size="14" fill="#FFC21A" letter-spacing="3">НА КРАВЦОВО</text>
+    </g>
+  </defs>
+</svg>
+
+<script>
+var ITEMS = [
+  {id:1, name:'Донер классический', desc:'Курица с вертела, свежие овощи, лаваш, соус на выбор.', price:1800, hit:true},
+  {id:2, name:'Донер говяжий', desc:'Говядина с вертела, маринованный лук, томаты, огурцы.', price:2300},
+  {id:3, name:'Донер сырный', desc:'Курица, плавленый сыр, зелень, чесночный соус.', price:2100},
+  {id:4, name:'Донер XL', desc:'Двойная порция мяса в большом лаваше.', price:2900},
+  {id:5, name:'Донер-бокс с фри', desc:'Мясо и овощи в коробке, картофель фри, соус.', price:2600},
+  {id:6, name:'Картофель фри', desc:'Хрустящий, с солью и соусом.', price:900},
+  {id:7, name:'Айран 0,5 л', desc:'Холодный, из холодильника.', price:600},
+  {id:8, name:'Кола 0,5 л', desc:'Холодная.', price:600}
+];
+var qty = {};
+var grid = document.getElementById('menuGrid');
+
+function fmt(n){ return String(n).replace(/\B(?=(\d{3})+(?!\d))/g, ' ') + ' ₸'; }
+
+function render(){
+  grid.innerHTML = '';
+  ITEMS.forEach(function(it){
+    var q = qty[it.id] || 0;
+    var el = document.createElement('div');
+    el.className = 'item' + (it.hit ? ' hit' : '');
+    el.innerHTML =
+      (it.hit ? '<span class="tag">Хит</span>' : '') +
+      '<h3>' + it.name + '</h3><p>' + it.desc + '</p>' +
+      '<div class="row"><span class="price">' + fmt(it.price) + '</span>' +
+      '<div class="qty">' +
+      (q > 0 ? '<button type="button" data-d="-1" data-id="' + it.id + '" aria-label="Убрать ' + it.name + '">−</button><output>' + q + '</output>' : '') +
+      '<button type="button" class="add" data-d="1" data-id="' + it.id + '" aria-label="Добавить ' + it.name + '">+</button>' +
+      '</div></div>';
+    grid.appendChild(el);
+  });
+  var n = 0, sum = 0;
+  ITEMS.forEach(function(it){ var q = qty[it.id] || 0; n += q; sum += q * it.price; });
+  document.getElementById('count').textContent = n ? 'Позиций: ' + n : 'Заказ пуст';
+  document.getElementById('total').textContent = fmt(sum);
+  document.getElementById('copyOrder').disabled = !n;
+}
+
+grid.addEventListener('click', function(e){
+  var b = e.target.closest('button[data-id]');
+  if(!b) return;
+  var id = +b.dataset.id, d = +b.dataset.d;
+  qty[id] = Math.max(0, (qty[id] || 0) + d);
+  render();
+});
+
+var toastEl = document.getElementById('toast'), toastT;
+function toast(msg){
+  toastEl.textContent = msg; toastEl.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(function(){ toastEl.hidden = true; }, 2200);
+}
+function copyText(text, okMsg){
+  function fallback(){
+    var ta = document.createElement('textarea');
+    ta.value = text; ta.style.position = 'fixed'; ta.style.opacity = '0';
+    document.body.appendChild(ta); ta.select();
+    var ok = false; try{ ok = document.execCommand('copy'); }catch(e){}
+    document.body.removeChild(ta);
+    toast(ok ? okMsg : 'Не удалось скопировать. Выделите текст вручную.');
+  }
+  try{
+    navigator.clipboard.writeText(text).then(function(){ toast(okMsg); }, fallback);
+  }catch(e){ fallback(); }
+}
+
+document.getElementById('copyOrder').addEventListener('click', function(){
+  var lines = ['Здравствуйте! Хочу заказать:'], sum = 0;
+  ITEMS.forEach(function(it){
+    var q = qty[it.id] || 0;
+    if(q){ lines.push('• ' + it.name + ' × ' + q + ' — ' + fmt(q * it.price)); sum += q * it.price; }
+  });
+  lines.push('Итого: ' + fmt(sum));
+  copyText(lines.join('\n'), 'Заказ скопирован. Отправьте его нам в мессенджер.');
+});
+document.getElementById('copyPhone').addEventListener('click', function(){
+  copyText(document.getElementById('phone').textContent, 'Номер скопирован');
+});
+
+render();
+</script>
+
+</html>
